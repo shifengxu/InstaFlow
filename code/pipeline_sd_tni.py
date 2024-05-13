@@ -268,7 +268,7 @@ class StableDiffusionPipelineTni(StableDiffusionPipeline):
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         self._num_timesteps = len(timesteps)
-        gaussian_noise = latents.clone().cpu()
+        gaussian_noise = latents.clone()
         for i, t in enumerate(timesteps):
             if self.interrupt:
                 continue

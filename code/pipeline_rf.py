@@ -655,28 +655,26 @@ class RectifiedFlowPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lora
         dt = 1.0 / num_inference_steps
 
         # 7. Denoising loop of Euler discretization from t = 0 to t = 1
-        with self.progress_bar(total=num_inference_steps) as progress_bar:
-            for i, t in enumerate(timesteps):
-                # expand the latents if we are doing classifier free guidance
-                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+        for i, t in enumerate(timesteps):
+            # expand the latents if we are doing classifier free guidance
+            latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
 
-                vec_t = torch.ones((latent_model_input.shape[0],), device=latents.device) * t 
+            vec_t = torch.ones((latent_model_input.shape[0],), dtype=torch.float16, device=latents.device) * t
 
-                v_pred = self.unet(latent_model_input, vec_t, encoder_hidden_states=prompt_embeds).sample
+            v_pred = self.unet(latent_model_input, vec_t, encoder_hidden_states=prompt_embeds).sample
 
-                # perform guidance 
-                if do_classifier_free_guidance:
-                    v_pred_neg, v_pred_text = v_pred.chunk(2)
-                    v_pred = v_pred_neg + guidance_scale * (v_pred_text - v_pred_neg)
+            # perform guidance
+            if do_classifier_free_guidance:
+                v_pred_neg, v_pred_text = v_pred.chunk(2)
+                v_pred = v_pred_neg + guidance_scale * (v_pred_text - v_pred_neg)
 
-                latents = latents + dt * v_pred 
+            latents = latents + dt * v_pred
 
-                # call the callback, if provided
-                if i == len(timesteps) - 1 or ((i + 1) % self.scheduler.order == 0):
-                    progress_bar.update()
-                    if callback is not None and i % callback_steps == 0:
-                        step_idx = i // getattr(self.scheduler, "order", 1)
-                        callback(step_idx, t, latents)
+            # call the callback, if provided
+            if i == len(timesteps) - 1 or ((i + 1) % self.scheduler.order == 0):
+                if callback is not None and i % callback_steps == 0:
+                    step_idx = i // getattr(self.scheduler, "order", 1)
+                    callback(step_idx, t, latents)
 
 
 

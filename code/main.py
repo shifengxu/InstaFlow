@@ -4,7 +4,6 @@ import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
 
-from tni_triplet_sampler import TextNoiseImageTripletSample
 from utils import log_info, get_model_id_by_name
 
 
@@ -17,6 +16,20 @@ def parse_args():
     parser.add_argument("--anno_file", type=str, default="")
     parser.add_argument("--log_interval", type=int, default=1)
 
+    # data
+    parser.add_argument("--data_dir", type=str, default="./output7_tni_gen/tni_gen")
+    parser.add_argument("--data_limit", type=int, default=20, help="ONly use x data. 0 mean no limit.")
+    parser.add_argument("--batch_size", type=int, default=1, help="0 mean to use size from config file")
+
+    # training
+    parser.add_argument('--lr', type=float, default=0.001, help="learning rate")
+    parser.add_argument("--n_epochs", type=int, default=500, help="0 mean epoch number from config file")
+    parser.add_argument('--ema_rate', type=float, default=0.999, help='mu in EMA. 0 means using value from config')
+    parser.add_argument("--resume_ckpt_path", type=str, default='')
+    parser.add_argument("--save_ckpt_path", type=str, default='./ckpt_tni_rf.pth')
+    parser.add_argument("--save_ckpt_interval", type=int, default=50, help="count by epoch")
+
+    # sampling
     parser.add_argument("--sample_count", type=int, default=10, help="0 means using annotation count")
     parser.add_argument("--sample_batch_size", type=int, default=5)
     parser.add_argument("--sample_output_dir", type=str, default="./output6_test_tni")
@@ -52,9 +65,9 @@ def sample(args):
         steps           = 25
         guidance_scale  = 6
     elif args.model == '2rf_sd15':
-        negative_prompt = "painting, unreal, twisted",
-        steps           = 25,
-        guidance_scale  = 1.5,
+        negative_prompt = "painting, unreal, twisted"
+        steps           = 25
+        guidance_scale  = 1.5
     elif args.model == 'instaflow_09b':
         negative_prompt = None
         steps           = 1
@@ -110,8 +123,13 @@ def main():
     if args.todo == 'sample':
         sample(args)
     elif args.todo == 'tni_gen':
+        from tni_triplet_sampler import TextNoiseImageTripletSample
         runner = TextNoiseImageTripletSample(args)
         runner.run()
+    elif args.todo == 'tni_train':
+        from tni_triplet_train import TextNoiseImageTripletTrain
+        runner = TextNoiseImageTripletTrain(args)
+        runner.train()
     else:
         raise ValueError(f"Invalid todo: {args.todo}")
 
