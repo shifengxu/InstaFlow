@@ -8,6 +8,7 @@ from utils import log_info, get_model_id_by_name
 
 
 def parse_args():
+    from utils import str2bool
     parser = argparse.ArgumentParser()
     parser.add_argument("--todo", type=str, default='tni_gen')
     parser.add_argument("--model", type=str, default='sd15')
@@ -28,6 +29,8 @@ def parse_args():
     parser.add_argument("--resume_ckpt_path", type=str, default='')
     parser.add_argument("--save_ckpt_path", type=str, default='./ckpt_tni_rf.pth')
     parser.add_argument("--save_ckpt_interval", type=int, default=50, help="count by epoch")
+    parser.add_argument("--loss_dual", type=str2bool, default=False, help="use dual loss")
+    parser.add_argument("--loss_lambda", type=float, default=0.1, help="lambda when dual loss")
 
     # sampling
     parser.add_argument("--sample_count", type=int, default=10, help="0 means using annotation count")
